@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KEEP YOUR FILES</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+    <div class="containers overflow-x-hidden overflow-y-auto fixed top-0 left-0 w-full h-full">
+        <div class="p-2 flex sticky-top z-[100000000000] items-center justify-center text-center gap-2">
+            <div class="p-2 bg-[var(--border)] flex items-center justify-center gap-2 w-full brd shadow-md rounded-md">
+                <input class="p-2 w-full bg-primary rounded-md" type="file" id="fileInput" multiple />
+                <button class="btn btn-primary">Upload</button>
+            </div>
+        </div>
+        <div class="designPath p-2 griddata"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.0.0-alpha1/js/bootstrap.min.js" integrity="sha384-oesi62hOLfzrys4LxRF63OJCXdXDipiYWBnvTl9Y9/TRlw5xlKIEHpNyvvDShgf/" crossorigin="anonymous"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        window.addEventListener("DOMContentLoaded", async() => {
+                    let designPath = document.querySelector(`.designPath`);
+
+                    function formatFileSize(bytes) {
+                        if (bytes === 0) return "0 Bytes";
+                        const k = 1024;
+                        const sizes = [
+                            "Bytes",
+                            "KB",
+                            "MB",
+                            "GB",
+                            "TB",
+                            "PB",
+                            "EB",
+                            "ZB",
+                            "YB",
+                        ];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return (
+                            parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+                        );
+                    }
+
+                    let addD = (image, data) => {
+                            let html = `
+                <div class="cards_p min-w-[300px] w-full flex items-center justify-between flex-col brd bg-[var(--dim)] p-2 overflow-hidden rounded-xl shadow-md">
+                    <div data-toggle="tooltip" data-placement="top" title="${
+                      data.name
+                    }" class="cardTitle w-full text-center text-[25px] line-clamp-2 uppercase p-2 font-bold">
+                        ${data.name}
+                    </div>
+                    <div class="cartimage w-full h-[300px] rounded-xl shadow-lg brd overflow-hidden">
+                        ${
+                          data.type.includes("image")
+                            ? `<img class="w-full h-full mb-1 object-contain object-top" loading="lazy" src="${image}" alt="">`
+                            : `<video playsInline class="w-full h-full object-contain object-top" controls autoplay muted src="${image}"></video>`
+                        }
+                        <hr>
+                    </div>
+                    <div class="acts w-full flex items-center justify-between gap-2 p-2">
+                        <div class="z-[1000000] relative uppercase cursor-pointer w-full flex items-center justify-center h-full p-2 rounded-md">
+                            ${formatFileSize(data.size)}
+                        </div>
+                    </div>
+                </div>
+            `;
+          designPath.innerHTML += html;
+        };
+
+        let ld = (data) => {
+          let u = new Uint8Array(data.blob);
+          let b = new Blob([u], { type: data.type });
+          addD(URL.createObjectURL(b), data);
+        };
+
+        if (designPath) {
+          let loadFiles = async (data, localstore, endp) => {
+            try {
+              if (localstore) {
+                let lc = localStorage.getItem(`saves`);
+                if (lc) {
+                  let j = JSON.parse(lc);
+                  j.push({
+                    endpoint: `${endp}`,
+                    savedTime: new Date().getTime(),
+                  });
+                  localStorage.setItem(`saves`, JSON.stringify(j));
+                  ld(data);
+                } else {
+                  localStorage.setItem(
+                    `saves`,
+                    JSON.stringify([
+                      { endpoint: `${endp}`, savedTime: new Date().getTime() },
+                    ]),
+                  );
+                  ld(data);
+                }
+              } else {
+                ld(data);
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          };
+
+          let fI = () => {
+            let lc = localStorage.getItem(`saves`);
+            if (lc) {
+              JSON.parse(lc).map(async (v) => {
+                let x = await axios.get(
+                  `${window.location.origin}/load?id=${v.endpoint}`,
+                );
+                loadFiles(await x.data, null, null);
+              });
+            }
+          };
+
+          fI();
+
+          let input = document.querySelector("input");
+          let btn = document.querySelector("button");
+
+          if (input && btn) {
+            let array = [];
+            input.addEventListener("change", (e) => {
+              let file = e.target.files;
+              if (file.length > 0) {
+                for (let i = 0; i < file.length; i++) {
+                  let reader = new FileReader();
+                  reader.onload = () => {
+                    let buf = new Uint8Array(reader.result);
+                    let arr = Array.from(buf);
+                    let obj = {
+                      blob: arr,
+                      name: file[i].name,
+                      type: file[i].type,
+                      size: file[i].size,
+                      time: new Date().getTime(),
+                    };
+                    array.push(obj);
+                    //
+                    ld(obj);
+                  };
+                  reader.readAsArrayBuffer(file[i]);
+                }
+              }
+            });
+
+            btn.addEventListener("click", async () => {
+              try {
+                btn.innerHTML = `uploading...`;
+                btn.disabled = true;
+                let attr = btn.getAttribute("disabled");
+
+                if (!attr || attr !== "true") {
+                  if (array.length > 0) {
+                    let url = `${window.location.origin}/upload/${Math.random()
+                      .toString()
+                      .split(".")
+                      .join("")}`;
+                    let copy = array;
+
+                    let rnF = () => { 
+                      try {
+                         copy.map((v, k) => {
+                      setTimeout(async () => {
+                        try {
+                          let ax = await axios.post(url, v, {
+                          headers: { "Content-Type": "multipart/form-data" },
+                        });
+
+                        if (k === copy.length - 1) {
+                          btn.innerHTML = `Upload`;
+                          btn.disabled = false;
+                        }
+
+                        let x = await axios.get(
+                          `${window.location.origin}/load?id=${await ax.data
+                            .endpoint}`,
+                        );
+                        loadFiles(await x.data, true, await ax.data.endpoint);
+                        }
+                        catch {
+                          rnF()
+                        }
+                      }, k * 1000);
+                    });
+
+                      }
+                      catch {
+rnF()
+                      }
+                    }
+
+                    rnF()
+                   
+                    input.value = "";
+                    array = [];
+                  } else {
+                    alert(`Please select something before you upload.`);
+                  }
+                }
+              } catch (e) {
+                console.log(e);
+                alert(
+                  `Something went wrong on the way. Please reload and try again.`,
+                );
+              }
+            });
+          }
+        }
+      });
+    </script>
+</body>
+
+</html>

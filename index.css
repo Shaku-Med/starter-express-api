@@ -1,0 +1,113 @@
+:root {
+    --maiinBg: #1f1f1f;
+    --mainCl: #fff;
+    --dim: #2d2d2de1;
+    --border: #363636;
+    color-scheme: dark;
+}
+
+body {
+    background: var(--maiinBg);
+    color: var(--mainCl);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    touch-action: none;
+    -ms-touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+}
+
+html {
+    font-size: 75%;
+}
+
+img {
+    pointer-events: none;
+    user-select: none;
+}
+
+.brd {
+    border: 1px solid var(--border);
+}
+
+.bb {
+    border-bottom: 1px solid var(--border);
+}
+
+.griddata {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(25rem, 1fr));
+    gap: 10px;
+}
+
+@media screen and (max-width: 600px) {
+    .griddata {
+        grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    }
+}
+
+.seeker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100%;
+    background: red;
+    transition: .3s ease-in-out;
+}
+
+svg {
+    width: 25px;
+}
+
+svg path {
+    stroke: var(--mainCl);
+}
+
+.songnamesdata {
+    bottom: -100%;
+    transition: .3s ease-in-out;
+}
+
+.controlleftpath:hover .songnamesdata {
+    bottom: 0;
+}
+
+@media (prefers-color-scheme: light) {
+     :root {
+        --maiinBg: #ffffff;
+        --mainCl: #272727;
+        --dim: #e0e0e0e1;
+        --border: #dfdfdf;
+        color-scheme: light;
+    }
+}
+
+.tx {
+    opacity: .7;
+}
+
+.vidbackground {
+    mix-blend-mode: overlay;
+}
+
+video {
+    pointer-events: none;
+}
+
+.vidbackground video::-webkit-media-controls {
+    display: none;
+}
+
+.griddata video {
+    pointer-events: all;
+}
+
+.griddata video::-webkit-media-controls {
+    display: auto;
+}
